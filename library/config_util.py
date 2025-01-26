@@ -51,11 +51,17 @@ class BaseSubsetParams:
   image_dir: Optional[str] = None
   num_repeats: int = 1
   shuffle_caption: bool = False
+  caption_separator: str = (",",)
   keep_tokens: int = 0
+  keep_tokens_separator: str = (None,)
+  secondary_separator: Optional[str] = None
+  enable_wildcard: bool = False
   color_aug: bool = False
   flip_aug: bool = False
   face_crop_aug_range: Optional[Tuple[float, float]] = None
   random_crop: bool = False
+  caption_prefix: Optional[str] = None
+  caption_suffix: Optional[str] = None
   caption_dropout_rate: float = 0.0
   caption_dropout_every_n_epochs: int = 0
   caption_tag_dropout_rate: float = 0.0
@@ -67,21 +73,26 @@ class DreamBoothSubsetParams(BaseSubsetParams):
   is_reg: bool = False
   class_tokens: Optional[str] = None
   caption_extension: str = ".caption"
+  cache_info: bool = False
+  alpha_mask: bool = False
 
 @dataclass
 class FineTuningSubsetParams(BaseSubsetParams):
   metadata_file: Optional[str] = None
+  alpha_mask: bool = False
 
 @dataclass
 class ControlNetSubsetParams(BaseSubsetParams):
   conditioning_data_dir: str = None
   caption_extension: str = ".caption"
+  cache_info: bool = False
 
 @dataclass
 class BaseDatasetParams:
   tokenizer: Union[CLIPTokenizer, List[CLIPTokenizer]] = None
   max_token_length: int = None
   resolution: Optional[Tuple[int, int]] = None
+  network_multiplier: float = 1.0
   debug_dataset: bool = False
 
 @dataclass
@@ -157,8 +168,14 @@ class ConfigSanitizer:
     "random_crop": bool,
     "shuffle_caption": bool,
     "keep_tokens": int,
+    "keep_tokens_separator": str,
+    "secondary_separator": str,
+    "caption_separator": str,
+    "enable_wildcard": bool,
     "token_warmup_min": int,
-    "token_warmup_step": Any(float,int),
+    "token_warmup_step": Any(float, int),
+    "caption_prefix": str,
+    "caption_suffix": str,
   }
   # DO means DropOut
   DO_SUBSET_ASCENDABLE_SCHEMA = {
@@ -170,18 +187,22 @@ class ConfigSanitizer:
   DB_SUBSET_ASCENDABLE_SCHEMA = {
     "caption_extension": str,
     "class_tokens": str,
+    "cache_info": bool,
   }
   DB_SUBSET_DISTINCT_SCHEMA = {
     Required("image_dir"): str,
     "is_reg": bool,
+    "alpha_mask": bool,
   }
   # FT means FineTuning
   FT_SUBSET_DISTINCT_SCHEMA = {
     Required("metadata_file"): str,
     "image_dir": str,
+    "alpha_mask": bool,
   }
   CN_SUBSET_ASCENDABLE_SCHEMA = {
     "caption_extension": str,
+    "cache_info": bool,
   }
   CN_SUBSET_DISTINCT_SCHEMA = {
     Required("image_dir"): str,
@@ -197,6 +218,7 @@ class ConfigSanitizer:
     "max_bucket_reso": int,
     "min_bucket_reso": int,
     "resolution": functools.partial(__validate_and_convert_scalar_or_twodim.__func__, int),
+    "network_multiplier": float,
   }
 
   # options handled by argparse but not handled by user config
@@ -217,7 +239,10 @@ class ConfigSanitizer:
   }
 
   def __init__(self, support_dreambooth: bool, support_finetuning: bool, support_controlnet: bool, support_dropout: bool) -> None:
-    assert support_dreambooth or support_finetuning or support_controlnet, "Neither DreamBooth mode nor fine tuning mode specified. Please specify one mode or more. / DreamBooth モードか fine tuning モードのどちらも指定されていません。1つ以上指定してください。"
+      assert support_dreambooth or support_finetuning or support_controlnet, (
+          "Neither DreamBooth mode nor fine tuning mode nor controlnet mode specified. Please specify one mode or more."
+          + " / DreamBooth モードか fine tuning モードか controlnet モードのどれも指定されていません。1つ以上指定してください。"
+      )
 
     self.db_subset_schema = self.__merge_dict(
       self.SUBSET_ASCENDABLE_SCHEMA,
@@ -262,70 +287,80 @@ class ConfigSanitizer:
       {"subsets": [self.cn_subset_schema]},
     )
 
-    if support_dreambooth and support_finetuning:
-      def validate_flex_dataset(dataset_config: dict):
-        subsets_config = dataset_config.get("subsets", [])
+        if support_dreambooth and support_finetuning:
 
-        if support_controlnet and all(["conditioning_data_dir" in subset for subset in subsets_config]):
-          return Schema(self.cn_dataset_schema)(dataset_config)
-        # check dataset meets FT style
-        # NOTE: all FT subsets should have "metadata_file"
-        elif all(["metadata_file" in subset for subset in subsets_config]):
-          return Schema(self.ft_dataset_schema)(dataset_config)
-        # check dataset meets DB style
-        # NOTE: all DB subsets should have no "metadata_file"
-        elif all(["metadata_file" not in subset for subset in subsets_config]):
-          return Schema(self.db_dataset_schema)(dataset_config)
-        else:
-          raise voluptuous.Invalid("DreamBooth subset and fine tuning subset cannot be mixed in the same dataset. Please split them into separate datasets. / DreamBoothのサブセットとfine tuninのサブセットを同一のデータセットに混在させることはできません。別々のデータセットに分割してください。")
+            def validate_flex_dataset(dataset_config: dict):
+                subsets_config = dataset_config.get("subsets", [])
 
-      self.dataset_schema = validate_flex_dataset
-    elif support_dreambooth:
-      self.dataset_schema = self.db_dataset_schema
-    elif support_finetuning:
-      self.dataset_schema = self.ft_dataset_schema
-    elif support_controlnet:
-      self.dataset_schema = self.cn_dataset_schema
+                if support_controlnet and all(["conditioning_data_dir" in subset for subset in subsets_config]):
+                    return Schema(self.cn_dataset_schema)(dataset_config)
+                # check dataset meets FT style
+                # NOTE: all FT subsets should have "metadata_file"
+                elif all(["metadata_file" in subset for subset in subsets_config]):
+                    return Schema(self.ft_dataset_schema)(dataset_config)
+                # check dataset meets DB style
+                # NOTE: all DB subsets should have no "metadata_file"
+                elif all(["metadata_file" not in subset for subset in subsets_config]):
+                    return Schema(self.db_dataset_schema)(dataset_config)
+                else:
+                    raise voluptuous.Invalid(
+                        "DreamBooth subset and fine tuning subset cannot be mixed in the same dataset. Please split them into separate datasets. / DreamBoothのサブセットとfine tuninのサブセットを同一のデータセットに混在させることはできません。別々のデータセットに分割してください。"
+                    )
 
-    self.general_schema = self.__merge_dict(
-      self.DATASET_ASCENDABLE_SCHEMA,
-      self.SUBSET_ASCENDABLE_SCHEMA,
-      self.DB_SUBSET_ASCENDABLE_SCHEMA if support_dreambooth else {},
-      self.CN_SUBSET_ASCENDABLE_SCHEMA if support_controlnet else {},
-      self.DO_SUBSET_ASCENDABLE_SCHEMA if support_dropout else {},
-    )
+            self.dataset_schema = validate_flex_dataset
+        elif support_dreambooth:
+            if support_controlnet:
+                self.dataset_schema = self.cn_dataset_schema
+            else:
+                self.dataset_schema = self.db_dataset_schema
+        elif support_finetuning:
+            self.dataset_schema = self.ft_dataset_schema
+        elif support_controlnet:
+            self.dataset_schema = self.cn_dataset_schema
 
-    self.user_config_validator = Schema({
-      "general": self.general_schema,
-      "datasets": [self.dataset_schema],
-    })
+        self.general_schema = self.__merge_dict(
+            self.DATASET_ASCENDABLE_SCHEMA,
+            self.SUBSET_ASCENDABLE_SCHEMA,
+            self.DB_SUBSET_ASCENDABLE_SCHEMA if support_dreambooth else {},
+            self.CN_SUBSET_ASCENDABLE_SCHEMA if support_controlnet else {},
+            self.DO_SUBSET_ASCENDABLE_SCHEMA if support_dropout else {},
+        )
 
-    self.argparse_schema = self.__merge_dict(
-      self.general_schema,
-      self.ARGPARSE_SPECIFIC_SCHEMA,
-      {optname: Any(None, self.general_schema[optname]) for optname in self.ARGPARSE_NULLABLE_OPTNAMES},
-      {a_name: self.general_schema[c_name] for a_name, c_name in self.ARGPARSE_OPTNAME_TO_CONFIG_OPTNAME.items()},
-    )
+        self.user_config_validator = Schema(
+            {
+                "general": self.general_schema,
+                "datasets": [self.dataset_schema],
+            }
+        )
 
-    self.argparse_config_validator = Schema(Object(self.argparse_schema), extra=voluptuous.ALLOW_EXTRA)
+        self.argparse_schema = self.__merge_dict(
+            self.general_schema,
+            self.ARGPARSE_SPECIFIC_SCHEMA,
+            {optname: Any(None, self.general_schema[optname]) for optname in self.ARGPARSE_NULLABLE_OPTNAMES},
+            {a_name: self.general_schema[c_name] for a_name, c_name in self.ARGPARSE_OPTNAME_TO_CONFIG_OPTNAME.items()},
+        )
 
-  def sanitize_user_config(self, user_config: dict) -> dict:
-    try:
-      return self.user_config_validator(user_config)
-    except MultipleInvalid:
-      # TODO: エラー発生時のメッセージをわかりやすくする
-      print("Invalid user config / ユーザ設定の形式が正しくないようです")
-      raise
+        self.argparse_config_validator = Schema(Object(self.argparse_schema), extra=voluptuous.ALLOW_EXTRA)
 
-  # NOTE: In nature, argument parser result is not needed to be sanitize
-  #   However this will help us to detect program bug
-  def sanitize_argparse_namespace(self, argparse_namespace: argparse.Namespace) -> argparse.Namespace:
-    try:
-      return self.argparse_config_validator(argparse_namespace)
-    except MultipleInvalid:
-      # XXX: this should be a bug
-      print("Invalid cmdline parsed arguments. This should be a bug. / コマンドラインのパース結果が正しくないようです。プログラムのバグの可能性が高いです。")
-      raise
+    def sanitize_user_config(self, user_config: dict) -> dict:
+        try:
+            return self.user_config_validator(user_config)
+        except MultipleInvalid:
+            # TODO: エラー発生時のメッセージをわかりやすくする
+            print("Invalid user config / ユーザ設定の形式が正しくないようです")
+            raise
+
+    # NOTE: In nature, argument parser result is not needed to be sanitize
+    #   However this will help us to detect program bug
+    def sanitize_argparse_namespace(self, argparse_namespace: argparse.Namespace) -> argparse.Namespace:
+        try:
+            return self.argparse_config_validator(argparse_namespace)
+        except MultipleInvalid:
+            # XXX: this should be a bug
+            print(
+                "Invalid cmdline parsed arguments. This should be a bug. / コマンドラインのパース結果が正しくないようです。プログラムのバグの可能性が高いです。"
+            )
+            raise
 
   # NOTE: value would be overwritten by latter dict if there is already the same key
   @staticmethod
@@ -456,15 +491,22 @@ def generate_dataset_group_by_blueprint(dataset_group_blueprint: DatasetGroupBlu
           num_repeats: {subset.num_repeats}
           shuffle_caption: {subset.shuffle_caption}
           keep_tokens: {subset.keep_tokens}
+          keep_tokens_separator: {subset.keep_tokens_separator}
+          caption_separator: {subset.caption_separator}
+          secondary_separator: {subset.secondary_separator}
+          enable_wildcard: {subset.enable_wildcard}
           caption_dropout_rate: {subset.caption_dropout_rate}
           caption_dropout_every_n_epoches: {subset.caption_dropout_every_n_epochs}
           caption_tag_dropout_rate: {subset.caption_tag_dropout_rate}
+          caption_prefix: {subset.caption_prefix}
+          caption_suffix: {subset.caption_suffix}
           color_aug: {subset.color_aug}
           flip_aug: {subset.flip_aug}
           face_crop_aug_range: {subset.face_crop_aug_range}
           random_crop: {subset.random_crop}
           token_warmup_min: {subset.token_warmup_min},
           token_warmup_step: {subset.token_warmup_step},
+          alpha_mask: {subset.alpha_mask},
       """), "  ")
 
       if is_dreambooth:
