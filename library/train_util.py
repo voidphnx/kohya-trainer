@@ -324,9 +324,14 @@ class BaseSubset:
     def __init__(
         self,
         image_dir: Optional[str],
+        alpha_mask: Optional[bool],
         num_repeats: int,
         shuffle_caption: bool,
+        caption_separator: str,
         keep_tokens: int,
+        keep_tokens_separator: str,
+        secondary_separator: Optional[str],
+        enable_wildcard: bool,
         color_aug: bool,
         flip_aug: bool,
         face_crop_aug_range: Optional[Tuple[float, float]],
@@ -334,13 +339,20 @@ class BaseSubset:
         caption_dropout_rate: float,
         caption_dropout_every_n_epochs: int,
         caption_tag_dropout_rate: float,
+        caption_prefix: Optional[str],
+        caption_suffix: Optional[str],
         token_warmup_min: int,
         token_warmup_step: Union[float, int],
     ) -> None:
         self.image_dir = image_dir
+        self.alpha_mask = alpha_mask if alpha_mask is not None else False
         self.num_repeats = num_repeats
         self.shuffle_caption = shuffle_caption
+        self.caption_separator = caption_separator
         self.keep_tokens = keep_tokens
+        self.keep_tokens_separator = keep_tokens_separator
+        self.secondary_separator = secondary_separator
+        self.enable_wildcard = enable_wildcard
         self.color_aug = color_aug
         self.flip_aug = flip_aug
         self.face_crop_aug_range = face_crop_aug_range
@@ -348,6 +360,8 @@ class BaseSubset:
         self.caption_dropout_rate = caption_dropout_rate
         self.caption_dropout_every_n_epochs = caption_dropout_every_n_epochs
         self.caption_tag_dropout_rate = caption_tag_dropout_rate
+        self.caption_prefix = caption_prefix
+        self.caption_suffix = caption_suffix
 
         self.token_warmup_min = token_warmup_min  # step=0におけるタグの数
         self.token_warmup_step = token_warmup_step  # N（N<1ならN*max_train_steps）ステップ目でタグの数が最大になる
@@ -362,9 +376,15 @@ class DreamBoothSubset(BaseSubset):
         is_reg: bool,
         class_tokens: Optional[str],
         caption_extension: str,
+        cache_info: bool,
+        alpha_mask: bool,
         num_repeats,
         shuffle_caption,
+        caption_separator: str,
         keep_tokens,
+        keep_tokens_separator,
+        secondary_separator,
+        enable_wildcard,
         color_aug,
         flip_aug,
         face_crop_aug_range,
@@ -372,6 +392,8 @@ class DreamBoothSubset(BaseSubset):
         caption_dropout_rate,
         caption_dropout_every_n_epochs,
         caption_tag_dropout_rate,
+        caption_prefix,
+        caption_suffix,
         token_warmup_min,
         token_warmup_step,
     ) -> None:
@@ -379,9 +401,14 @@ class DreamBoothSubset(BaseSubset):
 
         super().__init__(
             image_dir,
+            alpha_mask,
             num_repeats,
             shuffle_caption,
+            caption_separator,
             keep_tokens,
+            keep_tokens_separator,
+            secondary_separator,
+            enable_wildcard,
             color_aug,
             flip_aug,
             face_crop_aug_range,
@@ -389,6 +416,8 @@ class DreamBoothSubset(BaseSubset):
             caption_dropout_rate,
             caption_dropout_every_n_epochs,
             caption_tag_dropout_rate,
+            caption_prefix,
+            caption_suffix,
             token_warmup_min,
             token_warmup_step,
         )
@@ -398,6 +427,7 @@ class DreamBoothSubset(BaseSubset):
         self.caption_extension = caption_extension
         if self.caption_extension and not self.caption_extension.startswith("."):
             self.caption_extension = "." + self.caption_extension
+        self.cache_info = cache_info
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, DreamBoothSubset):
@@ -410,9 +440,14 @@ class FineTuningSubset(BaseSubset):
         self,
         image_dir,
         metadata_file: str,
+        alpha_mask: bool,
         num_repeats,
         shuffle_caption,
+        caption_separator,
         keep_tokens,
+        keep_tokens_separator,
+        secondary_separator,
+        enable_wildcard,
         color_aug,
         flip_aug,
         face_crop_aug_range,
@@ -420,6 +455,8 @@ class FineTuningSubset(BaseSubset):
         caption_dropout_rate,
         caption_dropout_every_n_epochs,
         caption_tag_dropout_rate,
+        caption_prefix,
+        caption_suffix,
         token_warmup_min,
         token_warmup_step,
     ) -> None:
@@ -427,9 +464,14 @@ class FineTuningSubset(BaseSubset):
 
         super().__init__(
             image_dir,
+            alpha_mask,
             num_repeats,
             shuffle_caption,
+            caption_separator,
             keep_tokens,
+            keep_tokens_separator,
+            secondary_separator,
+            enable_wildcard,
             color_aug,
             flip_aug,
             face_crop_aug_range,
@@ -437,6 +479,8 @@ class FineTuningSubset(BaseSubset):
             caption_dropout_rate,
             caption_dropout_every_n_epochs,
             caption_tag_dropout_rate,
+            caption_prefix,
+            caption_suffix,
             token_warmup_min,
             token_warmup_step,
         )
@@ -455,9 +499,14 @@ class ControlNetSubset(BaseSubset):
         image_dir: str,
         conditioning_data_dir: str,
         caption_extension: str,
+        cache_info: bool,
         num_repeats,
         shuffle_caption,
+        caption_separator,
         keep_tokens,
+        keep_tokens_separator,
+        secondary_separator,
+        enable_wildcard,
         color_aug,
         flip_aug,
         face_crop_aug_range,
@@ -465,6 +514,8 @@ class ControlNetSubset(BaseSubset):
         caption_dropout_rate,
         caption_dropout_every_n_epochs,
         caption_tag_dropout_rate,
+        caption_prefix,
+        caption_suffix,
         token_warmup_min,
         token_warmup_step,
     ) -> None:
@@ -472,9 +523,14 @@ class ControlNetSubset(BaseSubset):
 
         super().__init__(
             image_dir,
+            False,  # alpha_mask
             num_repeats,
             shuffle_caption,
+            caption_separator,
             keep_tokens,
+            keep_tokens_separator,
+            secondary_separator,
+            enable_wildcard,
             color_aug,
             flip_aug,
             face_crop_aug_range,
@@ -482,6 +538,8 @@ class ControlNetSubset(BaseSubset):
             caption_dropout_rate,
             caption_dropout_every_n_epochs,
             caption_tag_dropout_rate,
+            caption_prefix,
+            caption_suffix,
             token_warmup_min,
             token_warmup_step,
         )
@@ -490,6 +548,7 @@ class ControlNetSubset(BaseSubset):
         self.caption_extension = caption_extension
         if self.caption_extension and not self.caption_extension.startswith("."):
             self.caption_extension = "." + self.caption_extension
+        self.cache_info = cache_info
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, ControlNetSubset):
@@ -503,6 +562,7 @@ class BaseDataset(torch.utils.data.Dataset):
         tokenizer: Union[CLIPTokenizer, List[CLIPTokenizer]],
         max_token_length: int,
         resolution: Optional[Tuple[int, int]],
+        network_multiplier: float,
         debug_dataset: bool,
     ) -> None:
         super().__init__()
@@ -512,6 +572,7 @@ class BaseDataset(torch.utils.data.Dataset):
         self.max_token_length = max_token_length
         # width/height is used when enable_bucket==False
         self.width, self.height = (None, None) if resolution is None else resolution
+        self.network_multiplier = network_multiplier
         self.debug_dataset = debug_dataset
 
         self.subsets: List[Union[DreamBoothSubset, FineTuningSubset]] = []
@@ -589,6 +650,12 @@ class BaseDataset(torch.utils.data.Dataset):
         self.replacements[str_from] = str_to
 
     def process_caption(self, subset: BaseSubset, caption):
+        # caption に prefix/suffix を付ける
+        if subset.caption_prefix:
+            caption = subset.caption_prefix + " " + caption
+        if subset.caption_suffix:
+            caption = caption + " " + subset.caption_suffix
+
         # dropoutの決定：tag dropがこのメソッド内にあるのでここで行うのが良い
         is_drop_out = subset.caption_dropout_rate > 0 and random.random() < subset.caption_dropout_rate
         is_drop_out = (
@@ -600,16 +667,67 @@ class BaseDataset(torch.utils.data.Dataset):
         if is_drop_out:
             caption = ""
         else:
+            # process wildcards
+            if subset.enable_wildcard:
+                # if caption is multiline, random choice one line
+                if "\n" in caption:
+                    caption = random.choice(caption.split("\n"))
+
+                # wildcard is like '{aaa|bbb|ccc...}'
+                # escape the curly braces like {{ or }}
+                replacer1 = "⦅"
+                replacer2 = "⦆"
+                while replacer1 in caption or replacer2 in caption:
+                    replacer1 += "⦅"
+                    replacer2 += "⦆"
+
+                caption = caption.replace("{{", replacer1).replace("}}", replacer2)
+
+                # replace the wildcard
+                def replace_wildcard(match):
+                    return random.choice(match.group(1).split("|"))
+
+                caption = re.sub(r"\{([^}]+)\}", replace_wildcard, caption)
+
+                # unescape the curly braces
+                caption = caption.replace(replacer1, "{").replace(replacer2, "}")
+            else:
+                # if caption is multiline, use the first line
+                caption = caption.split("\n")[0]
+
             if subset.shuffle_caption or subset.token_warmup_step > 0 or subset.caption_tag_dropout_rate > 0:
-                tokens = [t.strip() for t in caption.strip().split(",")]
+                fixed_tokens = []
+                flex_tokens = []
+                fixed_suffix_tokens = []
+                if (
+                    hasattr(subset, "keep_tokens_separator")
+                    and subset.keep_tokens_separator
+                    and subset.keep_tokens_separator in caption
+                ):
+                    fixed_part, flex_part = caption.split(subset.keep_tokens_separator, 1)
+                    if subset.keep_tokens_separator in flex_part:
+                        flex_part, fixed_suffix_part = flex_part.split(subset.keep_tokens_separator, 1)
+                        fixed_suffix_tokens = [t.strip() for t in fixed_suffix_part.split(subset.caption_separator) if t.strip()]
+
+                    fixed_tokens = [t.strip() for t in fixed_part.split(subset.caption_separator) if t.strip()]
+                    flex_tokens = [t.strip() for t in flex_part.split(subset.caption_separator) if t.strip()]
+                else:
+                    tokens = [t.strip() for t in caption.strip().split(subset.caption_separator)]
+                    flex_tokens = tokens[:]
+                    if subset.keep_tokens > 0:
+                        fixed_tokens = flex_tokens[: subset.keep_tokens]
+                        flex_tokens = tokens[subset.keep_tokens :]
+
                 if subset.token_warmup_step < 1:  # 初回に上書きする
                     subset.token_warmup_step = math.floor(subset.token_warmup_step * self.max_train_steps)
                 if subset.token_warmup_step and self.current_step < subset.token_warmup_step:
                     tokens_len = (
-                        math.floor((self.current_step) * ((len(tokens) - subset.token_warmup_min) / (subset.token_warmup_step)))
+                        math.floor(
+                            (self.current_step) * ((len(flex_tokens) - subset.token_warmup_min) / (subset.token_warmup_step))
+                        )
                         + subset.token_warmup_min
                     )
-                    tokens = tokens[:tokens_len]
+                    flex_tokens = flex_tokens[:tokens_len]
 
                 def dropout_tags(tokens):
                     if subset.caption_tag_dropout_rate <= 0:
@@ -620,18 +738,16 @@ class BaseDataset(torch.utils.data.Dataset):
                             l.append(token)
                     return l
 
-                fixed_tokens = []
-                flex_tokens = tokens[:]
-                if subset.keep_tokens > 0:
-                    fixed_tokens = flex_tokens[: subset.keep_tokens]
-                    flex_tokens = tokens[subset.keep_tokens :]
-
                 if subset.shuffle_caption:
                     random.shuffle(flex_tokens)
 
                 flex_tokens = dropout_tags(flex_tokens)
 
-                caption = ", ".join(fixed_tokens + flex_tokens)
+                caption = ", ".join(fixed_tokens + flex_tokens + fixed_suffix_tokens)
+
+            # process secondary separator
+            if subset.secondary_separator:
+                caption = caption.replace(subset.secondary_separator, subset.caption_separator)
 
             # textual inversion対応
             for str_from, str_to in self.replacements.items():
@@ -801,6 +917,12 @@ class BaseDataset(torch.utils.data.Dataset):
         random.shuffle(self.buckets_indices)
         self.bucket_manager.shuffle()
 
+    def verify_bucket_reso_steps(self, min_steps: int):
+        assert self.bucket_reso_steps is None or self.bucket_reso_steps % min_steps == 0, (
+            f"bucket_reso_steps is {self.bucket_reso_steps}. it must be divisible by {min_steps}.\n"
+            + f"bucket_reso_stepsが{self.bucket_reso_steps}です。{min_steps}で割り切れる必要があります"
+        )
+
     def is_latent_cacheable(self):
         return all([not subset.color_aug and not subset.random_crop for subset in self.subsets])
 
@@ -826,9 +948,26 @@ class BaseDataset(torch.utils.data.Dataset):
         # sort by resolution
         image_infos.sort(key=lambda info: info.bucket_reso[0] * info.bucket_reso[1])
 
-        # split by resolution
-        batches = []
-        batch = []
+        # split by resolution and some conditions
+        class Condition:
+            def __init__(self, reso, flip_aug, alpha_mask, random_crop):
+                self.reso = reso
+                self.flip_aug = flip_aug
+                self.alpha_mask = alpha_mask
+                self.random_crop = random_crop
+
+            def __eq__(self, other):
+                return (
+                    self.reso == other.reso
+                    and self.flip_aug == other.flip_aug
+                    and self.alpha_mask == other.alpha_mask
+                    and self.random_crop == other.random_crop
+                )
+
+        batches: List[Tuple[Condition, List[ImageInfo]]] = []
+        batch: List[ImageInfo] = []
+        current_condition = None
+
         print("checking cache validity...")
         for info in tqdm(image_infos):
             subset = self.image_to_subset[info.image_key]
@@ -842,33 +981,36 @@ class BaseDataset(torch.utils.data.Dataset):
                 if not is_main_process:  # store to info only
                     continue
 
-                cache_available = is_disk_cached_latents_is_expected(info.bucket_reso, info.latents_npz, subset.flip_aug)
+                cache_available = is_disk_cached_latents_is_expected(info.bucket_reso, info.latents_npz, subset.flip_aug, subset.alpha_mask)
 
                 if cache_available:  # do not add to batch
                     continue
 
-            # if last member of batch has different resolution, flush the batch
-            if len(batch) > 0 and batch[-1].bucket_reso != info.bucket_reso:
-                batches.append(batch)
+            # if batch is not empty and condition is changed, flush the batch. Note that current_condition is not None if batch is not empty
+            condition = Condition(info.bucket_reso, subset.flip_aug, subset.alpha_mask, subset.random_crop)
+            if len(batch) > 0 and current_condition != condition:
+                batches.append((current_condition, batch))
                 batch = []
 
             batch.append(info)
+            current_condition = condition
 
             # if number of data in batch is enough, flush the batch
             if len(batch) >= vae_batch_size:
-                batches.append(batch)
+                batches.append((current_condition, batch))
                 batch = []
+                current_condition = None
 
         if len(batch) > 0:
-            batches.append(batch)
+            batches.append((current_condition, batch))
 
         if cache_to_disk and not is_main_process:  # if cache to disk, don't cache latents in non-main process, set to info only
             return
 
         # iterate batches: batch doesn't have image, image will be loaded in cache_batch_latents and discarded
         print("caching latents...")
-        for batch in tqdm(batches, smoothing=1, total=len(batches)):
-            cache_batch_latents(vae, cache_to_disk, batch, subset.flip_aug, subset.random_crop)
+        for condition, batch in tqdm(batches, smoothing=1, total=len(batches)):
+            cache_batch_latents(vae, cache_to_disk, batch, condition.flip_aug, condition.alpha_mask, condition.random_crop)
 
     # weight_dtypeを指定するとText Encoderそのもの、およひ出力がweight_dtypeになる
     # SDXLでのみ有効だが、datasetのメソッドとする必要があるので、sdxl_train_util.pyではなくこちらに実装する
@@ -935,10 +1077,10 @@ class BaseDataset(torch.utils.data.Dataset):
 
     def get_image_size(self, image_path):
         image = Image.open(image_path)
-        return image.size
+        return imagesize.get(image_path)
 
-    def load_image_with_face_info(self, subset: BaseSubset, image_path: str):
-        img = load_image(image_path)
+    def load_image_with_face_info(self, subset: BaseSubset, image_path: str, alpha_mask=False):
+        img = load_image(image_path, alpha_mask)
 
         face_cx = face_cy = face_w = face_h = 0
         if subset.face_crop_aug_range is not None:
@@ -1015,6 +1157,7 @@ class BaseDataset(torch.utils.data.Dataset):
         input_ids_list = []
         input_ids2_list = []
         latents_list = []
+        alpha_mask_list = []
         images = []
         original_sizes_hw = []
         crop_top_lefts = []
@@ -1037,21 +1180,26 @@ class BaseDataset(torch.utils.data.Dataset):
                 crop_ltrb = image_info.latents_crop_ltrb  # calc values later if flipped
                 if not flipped:
                     latents = image_info.latents
+                    alpha_mask = image_info.alpha_mask 
                 else:
                     latents = image_info.latents_flipped
+                    alpha_mask = None if image_info.alpha_mask is None else torch.flip(image_info.alpha_mask, [1])
 
                 image = None
             elif image_info.latents_npz is not None:  # FineTuningDatasetまたはcache_latents_to_disk=Trueの場合
-                latents, original_size, crop_ltrb, flipped_latents = load_latents_from_disk(image_info.latents_npz)
+                latents, original_size, crop_ltrb, flipped_latents, alpha_mask = load_latents_from_disk(image_info.latents_npz)
                 if flipped:
                     latents = flipped_latents
+                    alpha_mask = None if alpha_mask is None else alpha_mask[:, ::-1].copy()  # copy to avoid negative stride problem
                     del flipped_latents
                 latents = torch.FloatTensor(latents)
+                if alpha_mask is not None:
+                    alpha_mask = torch.FloatTensor(alpha_mask)
 
                 image = None
             else:
                 # 画像を読み込み、必要ならcropする
-                img, face_cx, face_cy, face_w, face_h = self.load_image_with_face_info(subset, image_info.absolute_path)
+                img, face_cx, face_cy, face_w, face_h = self.load_image_with_face_info(subset, image_info.absolute_path, subset.alpha_mask)
                 im_h, im_w = img.shape[0:2]
 
                 if self.enable_bucket:
@@ -1083,7 +1231,10 @@ class BaseDataset(torch.utils.data.Dataset):
                 # augmentation
                 aug = self.aug_helper.get_augmentor(subset.color_aug)
                 if aug is not None:
-                    img = aug(image=img)["image"]
+                    # augment RGB channels only
+                    img_rgb = img[:, :, :3]
+                    img_rgb = aug(image=img_rgb)["image"]
+                    img[:, :, :3] = img_rgb
 
                 if flipped:
                     img = img[:, ::-1, :].copy()  # copy to avoid negative stride problem
@@ -1091,8 +1242,25 @@ class BaseDataset(torch.utils.data.Dataset):
                 latents = None
                 image = self.image_transforms(img)  # -1.0~1.0のtorch.Tensorになる
 
+                if subset.alpha_mask:
+                    if img.shape[2] == 4:
+                        alpha_mask = img[:, :, 3]  # [H,W]
+                        alpha_mask = alpha_mask.astype(np.float32) / 255.0  # 0.0~1.0
+                        alpha_mask = torch.FloatTensor(alpha_mask)
+                    else:
+                        alpha_mask = torch.ones((img.shape[0], img.shape[1]), dtype=torch.float32)
+                else:
+                    alpha_mask = None
+
+                img = img[:, :, :3]  # remove alpha channel
+
+                latents = None
+                image = self.image_transforms(img)  # -1.0~1.0のtorch.Tensorになる
+                del img
+
             images.append(image)
             latents_list.append(latents)
+            alpha_mask_list.append(alpha_mask)
 
             target_size = (image.shape[2], image.shape[1]) if image is not None else (latents.shape[2] * 8, latents.shape[1] * 8)
 
@@ -1178,6 +1346,23 @@ class BaseDataset(torch.utils.data.Dataset):
             example["text_encoder_outputs2_list"] = torch.stack(text_encoder_outputs2_list)
             example["text_encoder_pool2_list"] = torch.stack(text_encoder_pool2_list)
 
+        # if one of alpha_masks is not None, we need to replace None with ones
+        none_or_not = [x is None for x in alpha_mask_list]
+        if all(none_or_not):
+            example["alpha_masks"] = None
+        elif any(none_or_not):
+            for i in range(len(alpha_mask_list)):
+                if alpha_mask_list[i] is None:
+                    if images[i] is not None:
+                        alpha_mask_list[i] = torch.ones((images[i].shape[1], images[i].shape[2]), dtype=torch.float32)
+                    else:
+                        alpha_mask_list[i] = torch.ones(
+                            (latents_list[i].shape[1] * 8, latents_list[i].shape[2] * 8), dtype=torch.float32
+                        )
+            example["alpha_masks"] = torch.stack(alpha_mask_list)
+        else:
+            example["alpha_masks"] = torch.stack(alpha_mask_list)
+
         if images[0] is not None:
             images = torch.stack(images)
             images = images.to(memory_format=torch.contiguous_format).float()
@@ -1193,6 +1378,8 @@ class BaseDataset(torch.utils.data.Dataset):
         example["target_sizes_hw"] = torch.stack([torch.LongTensor(x) for x in target_sizes_hw])
         example["flippeds"] = flippeds
 
+        example["network_multipliers"] = torch.FloatTensor([self.network_multiplier] * len(captions))
+
         if self.debug_dataset:
             example["image_keys"] = bucket[image_index : image_index + self.batch_size]
         return example
@@ -1206,6 +1393,7 @@ class BaseDataset(torch.utils.data.Dataset):
         resized_sizes = []
         bucket_reso = None
         flip_aug = None
+        alpha_mask = None
         random_crop = None
 
         for image_key in bucket[image_index : image_index + bucket_batch_size]:
@@ -1214,10 +1402,13 @@ class BaseDataset(torch.utils.data.Dataset):
 
             if flip_aug is None:
                 flip_aug = subset.flip_aug
+                alpha_mask = subset.alpha_mask
                 random_crop = subset.random_crop
                 bucket_reso = image_info.bucket_reso
             else:
+                # TODO そもそも混在してても動くようにしたほうがいい
                 assert flip_aug == subset.flip_aug, "flip_aug must be same in a batch"
+                assert alpha_mask == subset.alpha_mask, "alpha_mask must be same in a batch"
                 assert random_crop == subset.random_crop, "random_crop must be same in a batch"
                 assert bucket_reso == image_info.bucket_reso, "bucket_reso must be same in a batch"
 
@@ -1254,6 +1445,7 @@ class BaseDataset(torch.utils.data.Dataset):
         example["absolute_paths"] = absolute_paths
         example["resized_sizes"] = resized_sizes
         example["flip_aug"] = flip_aug
+        example["alpha_mask"] = alpha_mask
         example["random_crop"] = random_crop
         example["bucket_reso"] = bucket_reso
         return example
@@ -1267,15 +1459,16 @@ class DreamBoothDataset(BaseDataset):
         tokenizer,
         max_token_length,
         resolution,
+        network_multiplier: float,
         enable_bucket: bool,
         min_bucket_reso: int,
         max_bucket_reso: int,
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
         prior_loss_weight: float,
-        debug_dataset,
+        debug_dataset: bool,
     ) -> None:
-        super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+        super().__init__(tokenizer, max_token_length, resolution, network_multiplier, debug_dataset)
 
         assert resolution is not None, f"resolution is required / resolution（解像度）指定は必須です"
 
@@ -1286,12 +1479,9 @@ class DreamBoothDataset(BaseDataset):
 
         self.enable_bucket = enable_bucket
         if self.enable_bucket:
-            assert (
-                min(resolution) >= min_bucket_reso
-            ), f"min_bucket_reso must be equal or less than resolution / min_bucket_resoは最小解像度より大きくできません。解像度を大きくするかmin_bucket_resoを小さくしてください"
-            assert (
-                max(resolution) <= max_bucket_reso
-            ), f"max_bucket_reso must be equal or greater than resolution / max_bucket_resoは最大解像度より小さくできません。解像度を小さくするかmin_bucket_resoを大きくしてください"
+            min_bucket_reso, max_bucket_reso = self.adjust_min_max_bucket_reso_by_steps(
+                resolution, min_bucket_reso, max_bucket_reso, bucket_reso_steps
+            )
             self.min_bucket_reso = min_bucket_reso
             self.max_bucket_reso = max_bucket_reso
             self.bucket_reso_steps = bucket_reso_steps
@@ -1302,7 +1492,7 @@ class DreamBoothDataset(BaseDataset):
             self.bucket_reso_steps = None  # この情報は使われない
             self.bucket_no_upscale = False
 
-        def read_caption(img_path, caption_extension):
+        def read_caption(img_path, caption_extension, enable_wildcard):
             # captionの候補ファイル名を作る
             base_name = os.path.splitext(img_path)[0]
             base_name_face_det = base_name
@@ -1321,6 +1511,9 @@ class DreamBoothDataset(BaseDataset):
                             print(f"illegal char in file (not UTF-8) / ファイルにUTF-8以外の文字があります: {cap_path}")
                             raise e
                         assert len(lines) > 0, f"caption file is empty / キャプションファイルが空です: {cap_path}"
+                        if enable_wildcard:
+                            caption = "\n".join([line.strip() for line in lines if line.strip() != ""])  # 空行を除く、改行で連結
+                        else:
                         caption = lines[0].strip()
                     break
             return caption
@@ -1328,28 +1521,47 @@ class DreamBoothDataset(BaseDataset):
         def load_dreambooth_dir(subset: DreamBoothSubset):
             if not os.path.isdir(subset.image_dir):
                 print(f"not directory: {subset.image_dir}")
-                return [], []
+                return [], [], []
 
-            img_paths = glob_images(subset.image_dir, "*")
-            print(f"found directory {subset.image_dir} contains {len(img_paths)} image files")
+            info_cache_file = os.path.join(subset.image_dir, self.IMAGE_INFO_CACHE_FILE)
+            use_cached_info_for_subset = subset.cache_info
+            if use_cached_info_for_subset:
+                print(
+                    f"using cached image info for this subset / このサブセットで、キャッシュされた画像情報を使います: {info_cache_file}"
+                )
+                if not os.path.isfile(info_cache_file):
+                    logger.warning(
+                        f"image info file not found. You can ignore this warning if this is the first time to use this subset"
+                        + " / キャッシュファイルが見つかりませんでした。初回実行時はこの警告を無視してください: {metadata_file}"
+                    )
+                    use_cached_info_for_subset = False
 
+            if use_cached_info_for_subset:
+                # json: {`img_path`:{"caption": "caption...", "resolution": [width, height]}, ...}
+                with open(info_cache_file, "r", encoding="utf-8") as f:
+                    metas = json.load(f)
+                img_paths = list(metas.keys())
+                sizes = [meta["resolution"] for meta in metas.values()]
+
+                # we may need to check image size and existence of image files, but it takes time, so user should check it before training
+            else:
             # 画像ファイルごとにプロンプトを読み込み、もしあればそちらを使う
             captions = []
             missing_captions = []
             for img_path in img_paths:
-                cap_for_img = read_caption(img_path, subset.caption_extension)
+                cap_for_img = read_caption(img_path, subset.caption_extension, subset.enable_wildcard)
                 if cap_for_img is None and subset.class_tokens is None:
                     print(
                         f"neither caption file nor class tokens are found. use empty caption for {img_path} / キャプションファイルもclass tokenも見つかりませんでした。空のキャプションを使用します: {img_path}"
                     )
-                    captions.append("")
-                    missing_captions.append(img_path)
-                else:
-                    if cap_for_img is None:
-                        captions.append(subset.class_tokens)
+                        captions.append("")
                         missing_captions.append(img_path)
                     else:
-                        captions.append(cap_for_img)
+                        if cap_for_img is None:
+                            captions.append(subset.class_tokens)
+                            missing_captions.append(img_path)
+                        else:
+                            captions.append(cap_for_img)
 
             self.set_tag_frequency(os.path.basename(subset.image_dir), captions)  # タグ頻度を記録
 
@@ -1366,12 +1578,23 @@ class DreamBoothDataset(BaseDataset):
                         print(missing_caption + f"... and {remaining_missing_captions} more")
                         break
                     print(missing_caption)
-            return img_paths, captions
+            if not use_cached_info_for_subset and subset.cache_info:
+                print(f"cache image info for / 画像情報をキャッシュします : {info_cache_file}")
+                sizes = [self.get_image_size(img_path) for img_path in tqdm(img_paths, desc="get image size")]
+                matas = {}
+                for img_path, caption, size in zip(img_paths, captions, sizes):
+                    matas[img_path] = {"caption": caption, "resolution": list(size)}
+                with open(info_cache_file, "w", encoding="utf-8") as f:
+                    json.dump(matas, f, ensure_ascii=False, indent=2)
+                print(f"cache image info done for / 画像情報を出力しました : {info_cache_file}")
+
+            # if sizes are not set, image size will be read in make_buckets
+            return img_paths, captions, sizes
 
         print("prepare images.")
         num_train_images = 0
         num_reg_images = 0
-        reg_infos: List[ImageInfo] = []
+        reg_infos: List[Tuple[ImageInfo, DreamBoothSubset]] = []
         for subset in subsets:
             if subset.num_repeats < 1:
                 print(
@@ -1385,7 +1608,7 @@ class DreamBoothDataset(BaseDataset):
                 )
                 continue
 
-            img_paths, captions = load_dreambooth_dir(subset)
+            img_paths, captions, sizes = load_dreambooth_dir(subset)
             if len(img_paths) < 1:
                 print(f"ignore subset with image_dir='{subset.image_dir}': no images found / 画像が見つからないためサブセットを無視します")
                 continue
@@ -1395,10 +1618,12 @@ class DreamBoothDataset(BaseDataset):
             else:
                 num_train_images += subset.num_repeats * len(img_paths)
 
-            for img_path, caption in zip(img_paths, captions):
+            for img_path, caption, size in zip(img_paths, captions, sizes):
                 info = ImageInfo(img_path, subset.num_repeats, caption, subset.is_reg, img_path)
+                if size is not None:
+                    info.image_size = size
                 if subset.is_reg:
-                    reg_infos.append(info)
+                    reg_infos.append((info, subset))
                 else:
                     self.register_image(info, subset)
 
@@ -1419,7 +1644,7 @@ class DreamBoothDataset(BaseDataset):
             n = 0
             first_loop = True
             while n < num_train_images:
-                for info in reg_infos:
+                for info, subset in reg_infos:
                     if first_loop:
                         self.register_image(info, subset)
                         n += info.num_repeats
@@ -1441,14 +1666,15 @@ class FineTuningDataset(BaseDataset):
         tokenizer,
         max_token_length,
         resolution,
+        network_multiplier: float,
         enable_bucket: bool,
         min_bucket_reso: int,
         max_bucket_reso: int,
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
-        debug_dataset,
+        debug_dataset: bool,
     ) -> None:
-        super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+        super().__init__(tokenizer, max_token_length, resolution, network_multiplier, debug_dataset)
 
         self.batch_size = batch_size
 
@@ -1508,10 +1734,24 @@ class FineTuningDataset(BaseDataset):
                 caption = img_md.get("caption")
                 tags = img_md.get("tags")
                 if caption is None:
-                    caption = tags
-                elif tags is not None and len(tags) > 0:
-                    caption = caption + ", " + tags
-                    tags_list.append(tags)
+                    caption = tags  # could be multiline
+                    tags = None
+
+                if subset.enable_wildcard:
+                    # tags must be single line
+                    if tags is not None:
+                        tags = tags.replace("\n", subset.caption_separator)
+
+                    # add tags to each line of caption
+                    if caption is not None and tags is not None:
+                        caption = "\n".join(
+                            [f"{line}{subset.caption_separator}{tags}" for line in caption.split("\n") if line.strip() != ""]
+                        )
+                else:
+                    # use as is
+                    if tags is not None and len(tags) > 0:
+                        caption = caption + subset.caption_separator + tags
+                        tags_list.append(tags)
 
                 if caption is None:
                     caption = ""
@@ -1586,6 +1826,9 @@ class FineTuningDataset(BaseDataset):
 
             self.enable_bucket = enable_bucket
             if self.enable_bucket:
+                min_bucket_reso, max_bucket_reso = self.adjust_min_max_bucket_reso_by_steps(
+                    resolution, min_bucket_reso, max_bucket_reso, bucket_reso_steps
+                )
                 self.min_bucket_reso = min_bucket_reso
                 self.max_bucket_reso = max_bucket_reso
                 self.bucket_reso_steps = bucket_reso_steps
@@ -1645,25 +1888,35 @@ class ControlNetDataset(BaseDataset):
         tokenizer,
         max_token_length,
         resolution,
+        network_multiplier: float, 
         enable_bucket: bool,
         min_bucket_reso: int,
         max_bucket_reso: int,
         bucket_reso_steps: int,
         bucket_no_upscale: bool,
-        debug_dataset,
+        debug_dataset: float,
     ) -> None:
-        super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+        super().__init__(tokenizer, max_token_length, resolution, network_multiplier, debug_dataset)
 
         db_subsets = []
         for subset in subsets:
+            assert (
+                not subset.random_crop
+            ), "random_crop is not supported in ControlNetDataset / random_cropはControlNetDatasetではサポートされていません"
             db_subset = DreamBoothSubset(
                 subset.image_dir,
                 False,
                 None,
                 subset.caption_extension,
+                subset.cache_info,
+                False,
                 subset.num_repeats,
                 subset.shuffle_caption,
+                subset.caption_separator,
                 subset.keep_tokens,
+                subset.keep_tokens_separator,
+                subset.secondary_separator,
+                subset.enable_wildcard,
                 subset.color_aug,
                 subset.flip_aug,
                 subset.face_crop_aug_range,
@@ -1671,6 +1924,8 @@ class ControlNetDataset(BaseDataset):
                 subset.caption_dropout_rate,
                 subset.caption_dropout_every_n_epochs,
                 subset.caption_tag_dropout_rate,
+                subset.caption_prefix,
+                subset.caption_suffix,
                 subset.token_warmup_min,
                 subset.token_warmup_step,
             )
@@ -1682,6 +1937,7 @@ class ControlNetDataset(BaseDataset):
             tokenizer,
             max_token_length,
             resolution,
+            network_multiplier,
             enable_bucket,
             min_bucket_reso,
             max_bucket_reso,
@@ -1699,7 +1955,7 @@ class ControlNetDataset(BaseDataset):
 
         # assert all conditioning data exists
         missing_imgs = []
-        cond_imgs_with_img = set()
+        cond_imgs_with_pair = set()
         for image_key, info in self.dreambooth_dataset_delegate.image_data.items():
             db_subset = self.dreambooth_dataset_delegate.image_to_subset[image_key]
             subset = None
@@ -1713,23 +1969,29 @@ class ControlNetDataset(BaseDataset):
                 print(f"not directory: {subset.conditioning_data_dir}")
                 continue
 
-            img_basename = os.path.basename(info.absolute_path)
-            ctrl_img_path = os.path.join(subset.conditioning_data_dir, img_basename)
-            if not os.path.exists(ctrl_img_path):
+            img_basename = os.path.splitext(os.path.basename(info.absolute_path))[0]
+            ctrl_img_path = glob_images(subset.conditioning_data_dir, img_basename)
+            if len(ctrl_img_path) < 1:
                 missing_imgs.append(img_basename)
+                continue
+            ctrl_img_path = ctrl_img_path[0]
+            ctrl_img_path = os.path.abspath(ctrl_img_path)  # normalize path
 
             info.cond_img_path = ctrl_img_path
-            cond_imgs_with_img.add(ctrl_img_path)
+            cond_imgs_with_pair.add(os.path.splitext(ctrl_img_path)[0])  # remove extension because Windows is case insensitive
 
         extra_imgs = []
         for subset in subsets:
             conditioning_img_paths = glob_images(subset.conditioning_data_dir, "*")
-            extra_imgs.extend(
-                [cond_img_path for cond_img_path in conditioning_img_paths if cond_img_path not in cond_imgs_with_img]
-            )
+            conditioning_img_paths = [os.path.abspath(p) for p in conditioning_img_paths]  # normalize path
+            extra_imgs.extend([p for p in conditioning_img_paths if os.path.splitext(p)[0] not in cond_imgs_with_pair])
 
-        assert len(missing_imgs) == 0, f"missing conditioning data for {len(missing_imgs)} images: {missing_imgs}"
-        assert len(extra_imgs) == 0, f"extra conditioning data for {len(extra_imgs)} images: {extra_imgs}"
+        assert (
+            len(missing_imgs) == 0
+        ), f"missing conditioning data for {len(missing_imgs)} images / 制御用画像が見つかりませんでした: {missing_imgs}"
+        assert (
+            len(extra_imgs) == 0
+        ), f"extra conditioning data for {len(extra_imgs)} images / 余分な制御用画像があります: {extra_imgs}"
 
         self.conditioning_image_transforms = IMAGE_TRANSFORMS
 
@@ -1737,6 +1999,9 @@ class ControlNetDataset(BaseDataset):
         self.dreambooth_dataset_delegate.make_buckets()
         self.bucket_manager = self.dreambooth_dataset_delegate.bucket_manager
         self.buckets_indices = self.dreambooth_dataset_delegate.buckets_indices
+
+    def cache_latents(self, vae, vae_batch_size=1, cache_to_disk=False, is_main_process=True):
+        return self.dreambooth_dataset_delegate.cache_latents(vae, vae_batch_size, cache_to_disk, is_main_process)
 
     def __len__(self):
         return self.dreambooth_dataset_delegate.__len__()
@@ -1766,13 +2031,23 @@ class ControlNetDataset(BaseDataset):
                 assert (
                     cond_img.shape[0] == original_size_hw[0] and cond_img.shape[1] == original_size_hw[1]
                 ), f"size of conditioning image is not match / 画像サイズが合いません: {image_info.absolute_path}"
-                ct, cl = crop_top_left
+                cond_img = cv2.resize(
+                    cond_img, image_info.resized_size, interpolation=cv2.INTER_AREA
+                )  # INTER_AREAでやりたいのでcv2でリサイズ
+
+                # TODO support random crop
+                # 現在サポートしているcropはrandomではなく中央のみ
                 h, w = target_size_hw
+                ct = (cond_img.shape[0] - h) // 2
+                cl = (cond_img.shape[1] - w) // 2
                 cond_img = cond_img[ct : ct + h, cl : cl + w]
             else:
-                assert (
-                    cond_img.shape[0] == self.height and cond_img.shape[1] == self.width
-                ), f"image size is small / 画像サイズが小さいようです: {image_info.absolute_path}"
+                # assert (
+                #     cond_img.shape[0] == self.height and cond_img.shape[1] == self.width
+                # ), f"image size is small / 画像サイズが小さいようです: {image_info.absolute_path}"
+                # resize to target
+                if cond_img.shape[0] != target_size_hw[0] or cond_img.shape[1] != target_size_hw[1]:
+                    cond_img = pil_resize(cond_img, (int(target_size_hw[1]), int(target_size_hw[0])))
 
             if flipped:
                 cond_img = cond_img[:, ::-1, :].copy()  # copy to avoid negative stride
@@ -1832,6 +2107,12 @@ class DatasetGroup(torch.utils.data.ConcatDataset):
         for dataset in self.datasets:
             dataset.set_caching_mode(caching_mode)
 
+    def verify_bucket_reso_steps(self, min_steps: int):
+        assert self.bucket_reso_steps is None or self.bucket_reso_steps % min_steps == 0, (
+            f"bucket_reso_steps is {self.bucket_reso_steps}. it must be divisible by {min_steps}.\n"
+            + f"bucket_reso_stepsが{self.bucket_reso_steps}です。{min_steps}で割り切れる必要があります"
+        )
+
     def is_latent_cacheable(self) -> bool:
         return all([dataset.is_latent_cacheable() for dataset in self.datasets])
 
@@ -1855,23 +2136,36 @@ class DatasetGroup(torch.utils.data.ConcatDataset):
             dataset.disable_token_padding()
 
 
-def is_disk_cached_latents_is_expected(reso, npz_path: str, flip_aug: bool):
+def is_disk_cached_latents_is_expected(reso, npz_path: str, flip_aug: bool, alpha_mask: bool):
     expected_latents_size = (reso[1] // 8, reso[0] // 8)  # bucket_resoはWxHなので注意
 
     if not os.path.exists(npz_path):
         return False
 
-    npz = np.load(npz_path)
-    if "latents" not in npz or "original_size" not in npz or "crop_ltrb" not in npz:  # old ver?
-        return False
-    if npz["latents"].shape[1:3] != expected_latents_size:
-        return False
+    try:
+        npz = np.load(npz_path)
+        if "latents" not in npz or "original_size" not in npz or "crop_ltrb" not in npz:  # old ver?
+            return False
+        if npz["latents"].shape[1:3] != expected_latents_size:
+            return False
 
-    if flip_aug:
-        if "latents_flipped" not in npz:
-            return False
-        if npz["latents_flipped"].shape[1:3] != expected_latents_size:
-            return False
+        if flip_aug:
+            if "latents_flipped" not in npz:
+                return False
+            if npz["latents_flipped"].shape[1:3] != expected_latents_size:
+                return False
+
+        if alpha_mask:
+            if "alpha_mask" not in npz:
+                return False
+            if (npz["alpha_mask"].shape[1], npz["alpha_mask"].shape[0]) != reso:  # HxW => WxH != reso
+                return False
+        else:
+            if "alpha_mask" in npz:
+                return False
+    except Exception as e:
+        logger.error(f"Error loading file: {npz_path}")
+        raise e
 
     return True
 
@@ -1879,7 +2173,7 @@ def is_disk_cached_latents_is_expected(reso, npz_path: str, flip_aug: bool):
 # 戻り値は、latents_tensor, (original_size width, original_size height), (crop left, crop top)
 def load_latents_from_disk(
     npz_path,
-) -> Tuple[Optional[torch.Tensor], Optional[List[int]], Optional[List[int]], Optional[torch.Tensor]]:
+) -> Tuple[Optional[np.ndarray], Optional[List[int]], Optional[List[int]], Optional[np.ndarray], Optional[np.ndarray]]:
     npz = np.load(npz_path)
     if "latents" not in npz:
         raise ValueError(f"error: npz is old format. please re-generate {npz_path}")
@@ -1888,13 +2182,16 @@ def load_latents_from_disk(
     original_size = npz["original_size"].tolist()
     crop_ltrb = npz["crop_ltrb"].tolist()
     flipped_latents = npz["latents_flipped"] if "latents_flipped" in npz else None
-    return latents, original_size, crop_ltrb, flipped_latents
+    alpha_mask = npz["alpha_mask"] if "alpha_mask" in npz else None
+    return latents, original_size, crop_ltrb, flipped_latents, alpha_mask
 
 
-def save_latents_to_disk(npz_path, latents_tensor, original_size, crop_ltrb, flipped_latents_tensor=None):
+def save_latents_to_disk(npz_path, latents_tensor, original_size, crop_ltrb, flipped_latents_tensor=None, alpha_mask=None):
     kwargs = {}
     if flipped_latents_tensor is not None:
         kwargs["latents_flipped"] = flipped_latents_tensor.float().cpu().numpy()
+    if alpha_mask is not None:
+        kwargs["alpha_mask"] = alpha_mask.float().cpu().numpy()
     np.savez(
         npz_path,
         latents=latents_tensor.float().cpu().numpy(),
@@ -1940,6 +2237,8 @@ def debug_dataset(train_dataset, show_input_ids=False):
                 print(
                     f'{ik}, size: {train_dataset.image_data[ik].image_size}, loss weight: {lw}, caption: "{cap}", original size: {orgsz}, crop top left: {crptl}, target size: {trgsz}, flipped: {flpdz}'
                 )
+                if "network_multipliers" in example:
+                    print(f"network multiplier: {example['network_multipliers'][j]}")
 
                 if show_input_ids:
                     print(f"input ids: {iid}")
@@ -1960,6 +2259,13 @@ def debug_dataset(train_dataset, show_input_ids=False):
                         cond_img = cond_img[:, :, ::-1]
                         if os.name == "nt":
                             cv2.imshow("cond_img", cond_img)
+                            
+                    if "alpha_masks" in example and example["alpha_masks"] is not None:
+                        alpha_mask = example["alpha_masks"][j]
+                        print(f"alpha mask size: {alpha_mask.size()}")
+                        alpha_mask = (alpha_mask.numpy() * 255.0).astype(np.uint8)
+                        if os.name == "nt":
+                            cv2.imshow("alpha_mask", alpha_mask)
 
                     if os.name == "nt":  # only windows
                         cv2.imshow("img", im)
@@ -2006,8 +2312,8 @@ def glob_images_pathlib(dir_path, recursive):
 
 
 class MinimalDataset(BaseDataset):
-    def __init__(self, tokenizer, max_token_length, resolution, debug_dataset=False):
-        super().__init__(tokenizer, max_token_length, resolution, debug_dataset)
+    def __init__(self, tokenizer, max_token_length, resolution, network_multiplier, debug_dataset=False):
+        super().__init__(tokenizer, max_token_length, resolution, network_multiplier, debug_dataset)
 
         self.num_train_images = 0  # update in subclass
         self.num_reg_images = 0  # update in subclass
@@ -2020,6 +2326,9 @@ class MinimalDataset(BaseDataset):
         self.bucket_info = {}
         self.is_reg = False
         self.image_dir = "dummy"  # for metadata
+
+    def verify_bucket_reso_steps(self, min_steps: int):
+        pass
 
     def is_latent_cacheable(self) -> bool:
         return False
@@ -2075,24 +2384,35 @@ def load_arbitrary_dataset(args, tokenizer) -> MinimalDataset:
     return train_dataset_group
 
 
-def load_image(image_path):
-    image = Image.open(image_path)
-    if not image.mode == "RGB":
-        image = image.convert("RGB")
-    img = np.array(image, np.uint8)
-    return img
+def load_image(image_path, alpha=False):
+    try:
+        with Image.open(image_path) as image:
+            if alpha:
+                if not image.mode == "RGBA":
+                    image = image.convert("RGBA")
+            else:
+                if not image.mode == "RGB":
+                    image = image.convert("RGB")
+            img = np.array(image, np.uint8)
+            return img
+    except (IOError, OSError) as e:
+        logger.error(f"Error loading file: {image_path}")
+        raise e
 
 
 # 画像を読み込む。戻り値はnumpy.ndarray,(original width, original height),(crop left, crop top, crop right, crop bottom)
 def trim_and_resize_if_required(
-    random_crop: bool, image: Image.Image, reso, resized_size: Tuple[int, int]
+    random_crop: bool, image: np.ndarray, reso, resized_size: Tuple[int, int]
 ) -> Tuple[np.ndarray, Tuple[int, int], Tuple[int, int, int, int]]:
     image_height, image_width = image.shape[0:2]
     original_size = (image_width, image_height)  # size before resize
 
     if image_width != resized_size[0] or image_height != resized_size[1]:
         # リサイズする
-        image = cv2.resize(image, resized_size, interpolation=cv2.INTER_AREA)  # INTER_AREAでやりたいのでcv2でリサイズ
+        if image_width > resized_size[0] and image_height > resized_size[1]:
+            image = cv2.resize(image, resized_size, interpolation=cv2.INTER_AREA)  # INTER_AREAでやりたいのでcv2でリサイズ
+        else:
+            image = pil_resize(image, resized_size)
 
     image_height, image_width = image.shape[0:2]
 
@@ -2117,7 +2437,7 @@ def trim_and_resize_if_required(
 
 
 def cache_batch_latents(
-    vae: AutoencoderKL, cache_to_disk: bool, image_infos: List[ImageInfo], flip_aug: bool, random_crop: bool
+    vae: AutoencoderKL, cache_to_disk: bool, image_infos: List[ImageInfo], flip_aug: bool, use_alpha_mask: bool, random_crop: bool
 ) -> None:
     r"""
     requires image_infos to have: absolute_path, bucket_reso, resized_size, latents_npz
@@ -2129,8 +2449,9 @@ def cache_batch_latents(
     latents_original_size and latents_crop_ltrb are also set
     """
     images = []
+    alpha_masks: List[np.ndarray] = [] 
     for info in image_infos:
-        image = load_image(info.absolute_path) if info.image is None else np.array(info.image, np.uint8)
+        image = load_image(info.absolute_path, use_alpha_mask) if info.image is None else np.array(info.image, np.uint8)
         # TODO 画像のメタデータが壊れていて、メタデータから割り当てたbucketと実際の画像サイズが一致しない場合があるのでチェック追加要
         image, original_size, crop_ltrb = trim_and_resize_if_required(random_crop, image, info.bucket_reso, info.resized_size)
         image = IMAGE_TRANSFORMS(image)
@@ -2138,6 +2459,21 @@ def cache_batch_latents(
 
         info.latents_original_size = original_size
         info.latents_crop_ltrb = crop_ltrb
+        
+        if use_alpha_mask:
+            if image.shape[2] == 4:
+                alpha_mask = image[:, :, 3]  # [H,W]
+                alpha_mask = alpha_mask.astype(np.float32) / 255.0
+                alpha_mask = torch.FloatTensor(alpha_mask)  # [H,W]
+            else:
+                alpha_mask = torch.ones_like(image[:, :, 0], dtype=torch.float32)  # [H,W]
+        else:
+            alpha_mask = None
+        alpha_masks.append(alpha_mask)
+
+        image = image[:, :, :3]  # remove alpha channel if exists
+        image = IMAGE_TRANSFORMS(image)
+        images.append(image)
 
     img_tensors = torch.stack(images, dim=0)
     img_tensors = img_tensors.to(device=vae.device, dtype=vae.dtype)
@@ -2152,17 +2488,18 @@ def cache_batch_latents(
     else:
         flipped_latents = [None] * len(latents)
 
-    for info, latent, flipped_latent in zip(image_infos, latents, flipped_latents):
+    for info, latent, flipped_latent, alpha_mask in zip(image_infos, latents, flipped_latents, alpha_masks):
         # check NaN
         if torch.isnan(latents).any() or (flipped_latent is not None and torch.isnan(flipped_latent).any()):
             raise RuntimeError(f"NaN detected in latents: {info.absolute_path}")
 
         if cache_to_disk:
-            save_latents_to_disk(info.latents_npz, latent, info.latents_original_size, info.latents_crop_ltrb, flipped_latent)
+            save_latents_to_disk(info.latents_npz, latent, info.latents_original_size, info.latents_crop_ltrb, flipped_latent, alpha_mask)
         else:
             info.latents = latent
             if flip_aug:
                 info.latents_flipped = flipped_latent
+            info.alpha_mask = alpha_mask
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -2887,8 +3224,15 @@ def add_dataset_arguments(
     # dataset common
     parser.add_argument("--train_data_dir", type=str, default=None, help="directory for train images / 学習画像データのディレクトリ")
     parser.add_argument(
-        "--shuffle_caption", action="store_true", help="shuffle comma-separated caption / コンマで区切られたcaptionの各要素をshuffleする"
+        "--cache_info",
+        action="store_true",
+        help="cache meta information (caption and image size) for faster dataset loading. only available for DreamBooth"
+        + " / メタ情報（キャプションとサイズ）をキャッシュしてデータセット読み込みを高速化する。DreamBooth方式のみ有効",
     )
+    parser.add_argument(
+        "--shuffle_caption", action="store_true", help="shuffle separated caption / 区切られたcaptionの各要素をshuffleする"
+    )
+    parser.add_argument("--caption_separator", type=str, default=",", help="separator for caption / captionの区切り文字")
     parser.add_argument(
         "--caption_extension", type=str, default=".caption", help="extension of caption files / 読み込むcaptionファイルの拡張子"
     )
@@ -2903,6 +3247,30 @@ def add_dataset_arguments(
         type=int,
         default=0,
         help="keep heading N tokens when shuffling caption tokens (token means comma separated strings) / captionのシャッフル時に、先頭からこの個数のトークンをシャッフルしないで残す（トークンはカンマ区切りの各部分を意味する）",
+    )
+    parser.add_argument(
+        "--secondary_separator",
+        type=str,
+        default=None,
+        help="a secondary separator for caption. This separator is replaced to caption_separator after dropping/shuffling caption"
+        + " / captionのセカンダリ区切り文字。この区切り文字はcaptionのドロップやシャッフル後にcaption_separatorに置き換えられる",
+    )
+    parser.add_argument(
+        "--enable_wildcard",
+        action="store_true",
+        help="enable wildcard for caption (e.g. '{image|picture|rendition}') / captionのワイルドカードを有効にする（例：'{image|picture|rendition}'）",
+    )
+    parser.add_argument(
+        "--caption_prefix",
+        type=str,
+        default=None,
+        help="prefix for caption text / captionのテキストの先頭に付ける文字列",
+    )
+    parser.add_argument(
+        "--caption_suffix",
+        type=str,
+        default=None,
+        help="suffix for caption text / captionのテキストの末尾に付ける文字列",
     )
     parser.add_argument("--color_aug", action="store_true", help="enable weak color augmentation / 学習時に色合いのaugmentationを有効にする")
     parser.add_argument("--flip_aug", action="store_true", help="enable horizontal flip augmentation / 学習時に左右反転のaugmentationを有効にする")
@@ -2964,7 +3332,11 @@ def add_dataset_arguments(
         default=0,
         help="tag length reaches maximum on N steps (or N*max_train_steps if N<1) / N（N<1ならN*max_train_steps）ステップでタグ長が最大になる。デフォルトは0（最初から最大）",
     )
-
+    parser.add_argument(
+        "--alpha_mask",
+        action="store_true",
+        help="use alpha channel as mask for training / 画像のアルファチャンネルをlossのマスクに使用する",
+    )
     parser.add_argument(
         "--dataset_class",
         type=str,
@@ -3063,7 +3435,7 @@ def read_config_from_file(args: argparse.Namespace, parser: argparse.ArgumentPar
         exit(1)
 
     print(f"Loading settings from {config_path}...")
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         config_dict = toml.load(f)
 
     # combine all sections into one
