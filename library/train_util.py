@@ -1546,7 +1546,7 @@ class DreamBoothDataset(BaseDataset):
                 # we may need to check image size and existence of image files, but it takes time, so user should check it before training
             else:
             # 画像ファイルごとにプロンプトを読み込み、もしあればそちらを使う
-            captions = []
+                captions = []
             missing_captions = []
             for img_path in img_paths:
                 cap_for_img = read_caption(img_path, subset.caption_extension, subset.enable_wildcard)
