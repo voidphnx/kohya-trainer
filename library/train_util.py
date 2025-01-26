@@ -1514,7 +1514,7 @@ class DreamBoothDataset(BaseDataset):
                         if enable_wildcard:
                             caption = "\n".join([line.strip() for line in lines if line.strip() != ""])  # 空行を除く、改行で連結
                         else:
-                        caption = lines[0].strip()
+                            caption = lines[0].strip()
                     break
             return caption
 
