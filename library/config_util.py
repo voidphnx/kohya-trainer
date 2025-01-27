@@ -40,12 +40,6 @@ from .train_util import (
     ControlNetDataset,
     DatasetGroup,
 )
-from .utils import setup_logging
-
-setup_logging()
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 def add_config_arguments(parser: argparse.ArgumentParser):
