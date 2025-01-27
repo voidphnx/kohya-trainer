@@ -1556,12 +1556,12 @@ class DreamBoothDataset(BaseDataset):
                     )
                     captions.append("")
                     missing_captions.append(img_path)
+                else:
+                    if cap_for_img is None:
+                        captions.append(subset.class_tokens)
+                        missing_captions.append(img_path)
                     else:
-                        if cap_for_img is None:
-                            captions.append(subset.class_tokens)
-                            missing_captions.append(img_path)
-                        else:
-                            captions.append(cap_for_img)
+                        captions.append(cap_for_img)
 
             self.set_tag_frequency(os.path.basename(subset.image_dir), captions)  # タグ頻度を記録
 
