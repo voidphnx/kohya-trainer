@@ -1442,9 +1442,9 @@ class DreamBoothDataset(BaseDataset):
             captions = []
             missing_captions = []
             for img_path in img_paths:
-                cap_for_img = read_caption(img_path, subset.caption_extension)
+                cap_for_img = read_caption(img_path, subset.caption_extension, subset.enable_wildcard)
                 if cap_for_img is None and subset.class_tokens is None:
-                    print(
+                    logger.warning(
                         f"neither caption file nor class tokens are found. use empty caption for {img_path} / キャプションファイルもclass tokenも見つかりませんでした。空のキャプションを使用します: {img_path}"
                     )
                     captions.append("")
