@@ -56,7 +56,8 @@ from library import custom_train_functions
 from library.original_unet import UNet2DConditionModel
 from huggingface_hub import hf_hub_download
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES=True
 import cv2
 from einops import rearrange
 from torch import einsum
@@ -74,9 +75,9 @@ TOKENIZER_PATH = "openai/clip-vit-large-patch14"
 V2_STABLE_DIFFUSION_PATH = "stabilityai/stable-diffusion-2"  # ここからtokenizerだけ使う v2とv2.1はtokenizer仕様は同じ
 
 # checkpointファイル名
-EPOCH_STATE_NAME = "{}-{:06d}-state"
-EPOCH_FILE_NAME = "{}-{:06d}"
-EPOCH_DIFFUSERS_DIR_NAME = "{}-{:06d}"
+EPOCH_STATE_NAME = "{}-{:02d}-state"
+EPOCH_FILE_NAME = "{}-{:02d}"
+EPOCH_DIFFUSERS_DIR_NAME = "{}-{:02d}"
 LAST_STATE_NAME = "{}-state"
 DEFAULT_EPOCH_NAME = "epoch"
 DEFAULT_LAST_OUTPUT_NAME = "last"
