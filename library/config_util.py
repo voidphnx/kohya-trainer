@@ -53,8 +53,8 @@ class BaseSubsetParams:
   shuffle_caption: bool = False
   caption_separator: str = (",",)
   keep_tokens: int = 0
-  keep_tokens_separator: str = (None,)
-  secondary_separator: Optional[str] = None
+  keep_tokens_separator: str = ("|||",)
+  secondary_separator: Optional[str] = (";",)
   enable_wildcard: bool = False
   color_aug: bool = False
   flip_aug: bool = False
