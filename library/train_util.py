@@ -734,7 +734,7 @@ class BaseDataset(torch.utils.data.Dataset):
 
             # process secondary separator
             if subset.secondary_separator:
-                caption = caption.replace(subset.secondary_separator, subset.caption_separator)
+                caption = caption.replace(str(subset.secondary_separator), str(subset.caption_separator))
 
             # textual inversion対応
             for str_from, str_to in self.replacements.items():
