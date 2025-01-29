@@ -699,7 +699,7 @@ class BaseDataset(torch.utils.data.Dataset):
                     fixed_tokens = [t.strip() for t in fixed_part.split(subset.caption_separator) if t.strip()]
                     flex_tokens = [t.strip() for t in flex_part.split(subset.caption_separator) if t.strip()]
                 else:
-                    tokens = [t.strip() for t in caption.strip().split(subset.caption_separator)]
+                    tokens = [t.strip() for t in caption.strip().split(str(subset.caption_separator))]
                     flex_tokens = tokens[:]
                     if subset.keep_tokens > 0:
                         fixed_tokens = flex_tokens[: subset.keep_tokens]
