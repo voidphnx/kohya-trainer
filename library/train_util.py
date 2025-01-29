@@ -691,13 +691,13 @@ class BaseDataset(torch.utils.data.Dataset):
                     and subset.keep_tokens_separator
                     and subset.keep_tokens_separator in caption
                 ):
-                    fixed_part, flex_part = caption.split(subset.keep_tokens_separator, 1)
+                    fixed_part, flex_part = caption.split(str(subset.keep_tokens_separator), 1)
                     if subset.keep_tokens_separator in flex_part:
-                        flex_part, fixed_suffix_part = flex_part.split(subset.keep_tokens_separator, 1)
-                        fixed_suffix_tokens = [t.strip() for t in fixed_suffix_part.split(subset.caption_separator) if t.strip()]
+                        flex_part, fixed_suffix_part = flex_part.split(str(subset.keep_tokens_separator), 1)
+                        fixed_suffix_tokens = [t.strip() for t in fixed_suffix_part.split(str(subset.caption_separator)) if t.strip()]
 
-                    fixed_tokens = [t.strip() for t in fixed_part.split(subset.caption_separator) if t.strip()]
-                    flex_tokens = [t.strip() for t in flex_part.split(subset.caption_separator) if t.strip()]
+                    fixed_tokens = [t.strip() for t in fixed_part.split(str(subset.caption_separator)) if t.strip()]
+                    flex_tokens = [t.strip() for t in flex_part.split(str(subset.caption_separator)) if t.strip()]
                 else:
                     tokens = [t.strip() for t in caption.strip().split(str(subset.caption_separator))]
                     flex_tokens = tokens[:]
