@@ -1,5 +1,6 @@
 try:
     from sdxl_train_network import setup_parser, SdxlNetworkTrainer
+    import library.train_util as train_util
     from library.train_util import read_config_from_file
 
     parser = setup_parser()
