@@ -54,7 +54,7 @@ class BaseSubsetParams:
   caption_separator: str = (",",)
   keep_tokens: int = 0
   keep_tokens_separator: str = (None,)
-  secondary_separator: Optional[str] = (";",)
+  secondary_separator: Optional[str] = None
   enable_wildcard: bool = False
   color_aug: bool = False
   flip_aug: bool = False
@@ -168,7 +168,7 @@ class ConfigSanitizer:
     "caption_separator": str,
     "enable_wildcard": bool,
     "token_warmup_min": int,
-    "token_warmup_step": Any(float, int),
+    "token_warmup_step": Any(float,int),
     "caption_prefix": str,
     "caption_suffix": str,
   }
@@ -468,9 +468,15 @@ def generate_dataset_group_by_blueprint(dataset_group_blueprint: DatasetGroupBlu
           num_repeats: {subset.num_repeats}
           shuffle_caption: {subset.shuffle_caption}
           keep_tokens: {subset.keep_tokens}
+          keep_tokens_separator: {subset.keep_tokens_separator}
+          caption_separator: {subset.caption_separator}
+          secondary_separator: {subset.secondary_separator}
+          enable_wildcard: {subset.enable_wildcard}
           caption_dropout_rate: {subset.caption_dropout_rate}
           caption_dropout_every_n_epoches: {subset.caption_dropout_every_n_epochs}
           caption_tag_dropout_rate: {subset.caption_tag_dropout_rate}
+          caption_prefix: {subset.caption_prefix}
+          caption_suffix: {subset.caption_suffix}
           color_aug: {subset.color_aug}
           flip_aug: {subset.flip_aug}
           face_crop_aug_range: {subset.face_crop_aug_range}
